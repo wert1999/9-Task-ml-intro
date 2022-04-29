@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "Homework #9"
 authors = ["None"]
 
+[tool.poetry.scripts]
+train = "Forest_ml.train:train"
+
 [tool.poetry.dependencies]
 python = "^3.9"
 numpy = "^1.22.3"
