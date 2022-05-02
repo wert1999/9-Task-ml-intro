@@ -28,6 +28,12 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
     features_train, features_val, target_train, target_val = train_test_split(
         features, target, test_size=test_split_ratio, random_state=random_state
     )
+    # create scaler
+    scaler = StandardScaler()
+    # apply normalization to training set and transform training set
+    features_train_scaled = scaler.fit_transform(features_train, target_train)
+    # transform validation set
+    features_valid_scaled = scaler.transform(features_val)
     classifier = LogisticRegression(random_state=random_state).fit(
         features_train, target_train
     )
