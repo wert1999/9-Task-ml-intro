@@ -2,7 +2,7 @@ from pathlib import Path
 
 import click
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
@@ -34,6 +34,11 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
     features_train_scaled = scaler.fit_transform(features_train, target_train)
     # transform validation set
     features_valid_scaled = scaler.transform(features_val)
+    
+    knn_classifier = KNeighborsClassifier()
+    knn_accuracy = fit_evaluate_model(knn_classifier, features_train_scaled, target_train, features_valid_scaled, target_val)
+    
+    
     classifier = LogisticRegression(random_state=random_state).fit(
         features_train, target_train
     )
