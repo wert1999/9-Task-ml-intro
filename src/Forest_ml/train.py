@@ -38,7 +38,34 @@ def fit_evaluate_model(model, X_train, y_train, X_valid, Y_valid):
     type=click.Path(dir_okay=False, writable=True, path_type=Path),
     show_default=True,
 )
-
+@click.option(
+    "-n",
+    "--n-estimators",
+    default=100,
+    type=int,
+    show_default=True,
+)
+@click.option(
+    "-c",
+    "--criterion",
+    default='gini',
+    type=click.Choice(['gini', 'entropy'], case_sensitive=False),
+    show_default=True,
+)
+@click.option(
+    "-m",
+    "--max-depth",
+    default=None,
+    type= int,
+    show_default=True,
+)
+@click.option(
+    "-f",
+    "--max-features",
+    default="auto",
+    type=click.Choice(['auto', 'sqrt', 'log2', int, float], case_sensitive=False),
+    show_default=True,
+)
 def train(dataset_path: Path, save_model_path: Path, random_state: int, test_split_ratio: float) -> None:
     dataset = pd.read_csv(dataset_path)
     click.echo(f"Dataset shape: {dataset.shape}.")
