@@ -1,7 +1,8 @@
 from pathlib import Path
 from joblib import dump
 
-
+import mlflow
+import mlflow.sklearn
 import click
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -55,7 +56,7 @@ def fit_evaluate_model(model, X_train, y_train, X_valid, Y_valid):
 @click.option(
     "-m",
     "--max-depth",
-    default=100,
+    default=None,
     type= int,
     show_default=True,
 )
@@ -91,16 +92,23 @@ def train(dataset_path: Path, save_model_path: Path, random_state: int, test_spl
 
     click.echo(f"Model is saved to {knn_path}.")
 
-    rf = RandomForestClassifier(n_estimators=n_estimators, criterion=criterion,
-         max_depth=max_depth,  random_state=random_state) #,max_features=max_features
-    rf.fit(features_train, target_train)
-    y_predicted_rf = rf.predict(features_val)
-    rf_accuracy = accuracy_score(target_val, y_predicted_rf)
-    click.echo(f"Accuracy RandomForest model: {rf_accuracy}.")
-    rf_path = save_model_path
-    rf_path = Path(rf_path.parent, f"{rf_path.stem}_rf{rf_path.suffix}")
-    dump(rf, rf_path)
-    click.echo(f"Model is saved to {rf_path}.")
+    with mlflow.start_run():
+        rf = RandomForestClassifier(n_estimators=n_estimators, criterion=criterion,
+             max_depth=max_depth,  random_state=random_state) #,max_features=max_features
+        rf.fit(features_train, target_train)
+        y_predicted_rf = rf.predict(features_val)
+        rf_accuracy = accuracy_score(target_val, y_predicted_rf)
+        #mlflow.sklearn.log_model(rf, 'models')
+        mlflow.log_param("n_estimators", n_estimators)
+        mlflow.log_param("criterion", criterion)
+        mlflow.log_param("max_depth", max_depth)
+        mlflow.log_metric("accuracy", rf_accuracy)
+        click.echo(f"Accuracy RandomForest model: {rf_accuracy}.")
+        rf_path = save_model_path
+        rf_path = Path(rf_path.parent, f"{rf_path.stem}_rf{rf_path.suffix}")
+        dump(rf, rf_path)
+        click.echo(f"Model is saved to {rf_path}.")
+
 
 
 '''
