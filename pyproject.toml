@@ -5,7 +5,7 @@ description = ""
 authors = ["wert1999 <holubev@gmail.com>"]
 
 [tool.poetry.scripts]
-train = 'forest_ml.train:train'
+train = "forest_ml.train:train"
 
 [tool.poetry.dependencies]
 python = "^3.9"

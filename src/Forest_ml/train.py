@@ -54,6 +54,3 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
     #knn_accuracy = fit_evaluate_model(knn_classifier, features_train_scaled, target_train, features_valid_scaled, target_val)
     
     click.echo(f"Accuracy KNN model: {knn_accuracy}.")
-
-train("data/train.csv", 42, 0.2)
-#train(dataset_path, random_state, test_split_ratio)
