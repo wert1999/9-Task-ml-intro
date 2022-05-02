@@ -2,6 +2,8 @@ from pathlib import Path
 
 import click
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
+
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
@@ -26,7 +28,7 @@ from sklearn.model_selection import train_test_split
 def fit_evaluate_model(model, X_train, y_train, X_valid, Y_valid):
     model.fit(X_train, y_train)
     y_predicted = model.predict(X_valid)
-    return accuracy_score(y_valid, y_predicted)
+    return accuracy_score(Y_valid, y_predicted)
 
 
 def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> None:
