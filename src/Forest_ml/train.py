@@ -50,4 +50,4 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
     knn_accuracy = fit_evaluate_model(knn_classifier, features_train_scaled, target_train, features_valid_scaled, target_val)
     
     click.echo(f"Accuracy: {knn_accuracy}.")
-train()
+#train()
