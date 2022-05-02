@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "-9-task-ml-intro"
+name = "forest_ml"
 version = "0.1.0"
 description = ""
 authors = ["wert1999 <holubev@gmail.com>"]
 
 [tool.poetry.scripts]
-train = "Forest_ml.train:train"
+train = 'forest_ml.train:train'
 
 [tool.poetry.dependencies]
 python = "^3.9"
