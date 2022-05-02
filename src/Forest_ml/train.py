@@ -33,3 +33,4 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
     )
     accuracy = accuracy_score(target_val, classifier.predict(features_val))
     click.echo(f"Accuracy: {accuracy}.")
+train()
