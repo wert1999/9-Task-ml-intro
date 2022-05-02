@@ -29,7 +29,13 @@ def fit_evaluate_model(model, X_train, y_train, X_valid, Y_valid):
     default=0.2,
     type=click.FloatRange(0, 1, min_open=True, max_open=True),
 )
-
+@click.option(
+    "-s",
+    "--save-model-path",
+    default="data/model.joblib",
+    type=click.Path(dir_okay=False, writable=True, path_type=Path),
+    show_default=True,
+)
 
 def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> None:
     dataset = pd.read_csv(dataset_path)
@@ -51,6 +57,7 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
     y_predicted = knn_classifier.predict(features_valid_scaled)
     knn_accuracy = accuracy_score(target_val, y_predicted)
 
-    #knn_accuracy = fit_evaluate_model(knn_classifier, features_train_scaled, target_train, features_valid_scaled, target_val)
-    
     click.echo(f"Accuracy KNN model: {knn_accuracy}.")
+    
+    dump(pipeline, save_model_path)
+    click.echo(f"Model is saved to {save_model_path}.")
