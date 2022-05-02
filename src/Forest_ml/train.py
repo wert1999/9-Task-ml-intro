@@ -20,6 +20,15 @@ from sklearn.model_selection import train_test_split
     default=0.2,
     type=click.FloatRange(0, 1, min_open=True, max_open=True),
 )
+
+
+# function to train a given model, generate predictions, and return accuracy score
+def fit_evaluate_model(model, X_train, y_train, X_valid, Y_valid):
+    model.fit(X_train, y_train)
+    y_predicted = model.predict(X_valid)
+    return accuracy_score(y_valid, y_predicted)
+
+
 def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> None:
     dataset = pd.read_csv(dataset_path)
     click.echo(f"Dataset shape: {dataset.shape}.")
@@ -38,10 +47,5 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
     knn_classifier = KNeighborsClassifier()
     knn_accuracy = fit_evaluate_model(knn_classifier, features_train_scaled, target_train, features_valid_scaled, target_val)
     
-    
-    classifier = LogisticRegression(random_state=random_state).fit(
-        features_train, target_train
-    )
-    accuracy = accuracy_score(target_val, classifier.predict(features_val))
-    click.echo(f"Accuracy: {accuracy}.")
+    click.echo(f"Accuracy: {knn_accuracy}.")
 train()
