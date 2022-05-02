@@ -9,6 +9,13 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
 
+# function to train a given model, generate predictions, and return accuracy score
+def fit_evaluate_model(model, X_train, y_train, X_valid, Y_valid):
+    model.fit(X_train, y_train)
+    y_predicted = model.predict(X_valid)
+    return accuracy_score(Y_valid, y_predicted)
+
+
 @click.command()
 @click.option(
     "-d",
@@ -22,13 +29,6 @@ from sklearn.model_selection import train_test_split
     default=0.2,
     type=click.FloatRange(0, 1, min_open=True, max_open=True),
 )
-
-
-# function to train a given model, generate predictions, and return accuracy score
-def fit_evaluate_model(model, X_train, y_train, X_valid, Y_valid):
-    model.fit(X_train, y_train)
-    y_predicted = model.predict(X_valid)
-    return accuracy_score(Y_valid, y_predicted)
 
 
 def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> None:
