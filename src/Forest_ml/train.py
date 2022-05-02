@@ -47,7 +47,12 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
     features_valid_scaled = scaler.transform(features_val)
     
     knn_classifier = KNeighborsClassifier()
-    knn_accuracy = fit_evaluate_model(knn_classifier, features_train_scaled, target_train, features_valid_scaled, target_val)
+    knn_classifier.fit(features_train_scaled, target_train)
+    y_predicted = knn_classifier.predict(features_valid_scaled)
+    knn_accuracy = accuracy_score(target_val, y_predicted)
+
+    #knn_accuracy = fit_evaluate_model(knn_classifier, features_train_scaled, target_train, features_valid_scaled, target_val)
     
     click.echo(f"Accuracy: {knn_accuracy}.")
-#train()
+
+train("data/train.csv", 42, 0.2)
