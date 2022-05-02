@@ -59,9 +59,14 @@ def train(dataset_path: Path, save_model_path: Path, random_state: int, test_spl
     y_predicted_knn = knn.predict(features_valid_scaled)
     knn_accuracy = accuracy_score(target_val, y_predicted_knn)
     click.echo(f"Accuracy KNN model: {knn_accuracy}.")
-    dump(knn, save_model_path+"knn")
+
     knn_path = save_model_path
-    knn_path.name = knn_path.name + "knn"
+    knn_path = Path(knn_path.parent, f"{knn_path.stem}_knn{knn_path.suffix}")
+    print("save_model_path",save_model_path)
+
+    print("knn_path",knn_path)
+    dump(knn, knn_path)
+
     click.echo(f"Model is saved to {knn_path}.")
 
     rf = RandomForestClassifier()
@@ -70,6 +75,6 @@ def train(dataset_path: Path, save_model_path: Path, random_state: int, test_spl
     rf_accuracy = accuracy_score(target_val, y_predicted_rf)
     click.echo(f"Accuracy RandomForest model: {rf_accuracy}.")
     rf_path = save_model_path
-    rf_path.name = rf_path.name + "rf"
-    dump(rf, save_model_path+"rf")
+    rf_path = Path(rf_path.parent, f"{rf_path.stem}_rf{rf_path.suffix}")
+    dump(rf, rf_path)
     click.echo(f"Model is saved to {rf_path}.")
