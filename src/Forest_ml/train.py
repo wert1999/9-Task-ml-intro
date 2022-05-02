@@ -1,10 +1,12 @@
 from pathlib import Path
+from joblib import dump
+
 
 import click
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
@@ -37,7 +39,7 @@ def fit_evaluate_model(model, X_train, y_train, X_valid, Y_valid):
     show_default=True,
 )
 
-def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> None:
+def train(dataset_path: Path, save_model_path: Path, random_state: int, test_split_ratio: float) -> None:
     dataset = pd.read_csv(dataset_path)
     click.echo(f"Dataset shape: {dataset.shape}.")
     features = dataset.drop("Cover_Type", axis=1)
@@ -52,12 +54,22 @@ def train(dataset_path: Path, random_state: int, test_split_ratio: float) -> Non
     # transform validation set
     features_valid_scaled = scaler.transform(features_val)
     
-    knn_classifier = KNeighborsClassifier()
-    knn_classifier.fit(features_train_scaled, target_train)
-    y_predicted = knn_classifier.predict(features_valid_scaled)
-    knn_accuracy = accuracy_score(target_val, y_predicted)
-
+    knn = KNeighborsClassifier()
+    knn.fit(features_train_scaled, target_train)
+    y_predicted_knn = knn.predict(features_valid_scaled)
+    knn_accuracy = accuracy_score(target_val, y_predicted_knn)
     click.echo(f"Accuracy KNN model: {knn_accuracy}.")
-    
-    dump(pipeline, save_model_path)
-    click.echo(f"Model is saved to {save_model_path}.")
+    dump(knn, save_model_path+"knn")
+    knn_path = save_model_path
+    knn_path.name = knn_path.name + "knn"
+    click.echo(f"Model is saved to {knn_path}.")
+
+    rf = RandomForestClassifier()
+    rf.fit(features_train, target_train)
+    y_predicted_rf = rf.predict(features_val)
+    rf_accuracy = accuracy_score(target_val, y_predicted_rf)
+    click.echo(f"Accuracy RandomForest model: {rf_accuracy}.")
+    rf_path = save_model_path
+    rf_path.name = rf_path.name + "rf"
+    dump(rf, save_model_path+"rf")
+    click.echo(f"Model is saved to {rf_path}.")
