@@ -4,11 +4,6 @@ from sklearn.pipeline import Pipeline
 
 
 def create_pipeline(
-    n_estimators: int,
-    criterion: {“gini”, “entropy”},
-    max_depth: int, bootstrap: bool,
-    max_features: {“auto”, “sqrt”, “log2”} or int or float,
-    random_state: int
 ) -> Pipeline:
     pipeline_steps = []
     if use_scaler:
@@ -40,3 +35,6 @@ print('Best Hyperparameters: %s' % result.best_params_)
 y_pred = grid.predict(X_val.values)
 print('accuracy on validation data=', accuracy_score(y_val, y_pred))
 print('Time',time()-start)
+
+
+max_features=max_features,

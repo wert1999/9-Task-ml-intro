@@ -10,13 +10,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
-
+'''
 # function to train a given model, generate predictions, and return accuracy score
 def fit_evaluate_model(model, X_train, y_train, X_valid, Y_valid):
     model.fit(X_train, y_train)
     y_predicted = model.predict(X_valid)
     return accuracy_score(Y_valid, y_predicted)
-
+'''
 
 @click.command()
 @click.option(
@@ -49,24 +49,19 @@ def fit_evaluate_model(model, X_train, y_train, X_valid, Y_valid):
     "-c",
     "--criterion",
     default='gini',
-    type=click.Choice(['gini', 'entropy'], case_sensitive=False),
+    type=click.Choice(['gini', 'entropy']),
     show_default=True,
 )
 @click.option(
     "-m",
     "--max-depth",
-    default=None,
+    default=100,
     type= int,
     show_default=True,
 )
-@click.option(
-    "-f",
-    "--max-features",
-    default="auto",
-    type=click.Choice(['auto', 'sqrt', 'log2', int, float], case_sensitive=False),
-    show_default=True,
-)
-def train(dataset_path: Path, save_model_path: Path, random_state: int, test_split_ratio: float) -> None:
+
+def train(dataset_path: Path, save_model_path: Path, random_state: int, test_split_ratio: float,
+    n_estimators: int, criterion, max_depth: int) -> None:
     dataset = pd.read_csv(dataset_path)
     click.echo(f"Dataset shape: {dataset.shape}.")
     features = dataset.drop("Cover_Type", axis=1)
@@ -96,7 +91,8 @@ def train(dataset_path: Path, save_model_path: Path, random_state: int, test_spl
 
     click.echo(f"Model is saved to {knn_path}.")
 
-    rf = RandomForestClassifier()
+    rf = RandomForestClassifier(n_estimators=n_estimators, criterion=criterion,
+         max_depth=max_depth,  random_state=random_state) #,max_features=max_features
     rf.fit(features_train, target_train)
     y_predicted_rf = rf.predict(features_val)
     rf_accuracy = accuracy_score(target_val, y_predicted_rf)
@@ -105,3 +101,14 @@ def train(dataset_path: Path, save_model_path: Path, random_state: int, test_spl
     rf_path = Path(rf_path.parent, f"{rf_path.stem}_rf{rf_path.suffix}")
     dump(rf, rf_path)
     click.echo(f"Model is saved to {rf_path}.")
+
+
+'''
+@click.option(
+    "-f",
+    "--max-features",
+    default="auto",
+    type=click.Choice(['auto', 'sqrt', 'log2', click.INT, click.FLOAT], case_sensitive=False),
+    show_default=True,
+)
+'''
