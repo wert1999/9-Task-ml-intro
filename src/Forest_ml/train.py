@@ -1,6 +1,7 @@
 from pathlib import Path
 from joblib import dump
 
+from numpy import mean
 import mlflow
 import mlflow.sklearn
 import click
@@ -10,6 +11,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
+
 
 '''
 # function to train a given model, generate predictions, and return accuracy score
@@ -20,6 +23,12 @@ def fit_evaluate_model(model, X_train, y_train, X_valid, Y_valid):
 '''
 
 @click.command()
+@click.option(
+    "-e",
+    "--estimator",
+    default="rf",
+    type=click.Choice(['gini', 'entropy']),
+)
 @click.option(
     "-d",
     "--dataset-path",
@@ -60,9 +69,16 @@ def fit_evaluate_model(model, X_train, y_train, X_valid, Y_valid):
     type= int,
     show_default=True,
 )
+@click.option(
+    "-cv",
+    "--cv",
+    default=5,
+    type= int,
+    show_default=True,
+)
 
 def train(dataset_path: Path, save_model_path: Path, random_state: int, test_split_ratio: float,
-    n_estimators: int, criterion, max_depth: int) -> None:
+    n_estimators: int, criterion, max_depth: int, cv:int) -> None:
     dataset = pd.read_csv(dataset_path)
     click.echo(f"Dataset shape: {dataset.shape}.")
     features = dataset.drop("Cover_Type", axis=1)
@@ -81,7 +97,7 @@ def train(dataset_path: Path, save_model_path: Path, random_state: int, test_spl
     knn.fit(features_train_scaled, target_train)
     y_predicted_knn = knn.predict(features_valid_scaled)
     knn_accuracy = accuracy_score(target_val, y_predicted_knn)
-    click.echo(f"Accuracy KNN model: {knn_accuracy}.")
+    click.echo(f"Accuracy KNN model w/o CV: {knn_accuracy}.")
 
     knn_path = save_model_path
     knn_path = Path(knn_path.parent, f"{knn_path.stem}_knn{knn_path.suffix}")
@@ -95,15 +111,30 @@ def train(dataset_path: Path, save_model_path: Path, random_state: int, test_spl
     with mlflow.start_run():
         rf = RandomForestClassifier(n_estimators=n_estimators, criterion=criterion,
              max_depth=max_depth,  random_state=random_state) #,max_features=max_features
+
         rf.fit(features_train, target_train)
         y_predicted_rf = rf.predict(features_val)
         rf_accuracy = accuracy_score(target_val, y_predicted_rf)
+
+        scores_accuracy = cross_val_score(rf,features, target, scoring='accuracy', cv=cv, n_jobs=-1)
+        scores_v_measure = cross_val_score(rf,features, target, scoring='v_measure_score', cv=cv, n_jobs=-1)
+        scores_f1_micro = cross_val_score(rf,features, target, scoring='f1_micro', cv=cv, n_jobs=-1)
+        click.echo(f"Accuracy RandomForest model w/o CV: {rf_accuracy}.")
+
+        rf.fit(features_train, target_train)
+        y_predicted_rf = rf.predict(features_val)
+        rf_accuracy = accuracy_score(target_val, y_predicted_rf)
+        
         #mlflow.sklearn.log_model(rf, 'models')
+
         mlflow.log_param("n_estimators", n_estimators)
         mlflow.log_param("criterion", criterion)
         mlflow.log_param("max_depth", max_depth)
-        mlflow.log_metric("accuracy", rf_accuracy)
-        click.echo(f"Accuracy RandomForest model: {rf_accuracy}.")
+        mlflow.log_metric("acc. w.o CV", rf_accuracy)
+        mlflow.log_metric("accuracy", mean(scores_accuracy))
+        mlflow.log_metric("v_measure", mean(scores_v_measure))
+        mlflow.log_metric("f1_micro", mean(scores_f1_micro))
+
         rf_path = save_model_path
         rf_path = Path(rf_path.parent, f"{rf_path.stem}_rf{rf_path.suffix}")
         dump(rf, rf_path)
