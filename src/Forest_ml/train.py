@@ -138,9 +138,6 @@ def train(estimator, dataset_path: Path, save_model_path: Path, random_state: in
 
     with mlflow.start_run():
 
-        if decomposition:
-            rdc = TruncatedSVD(n_components=n_components)
-            features = rdc.fit_transform(features)
         if nested_cv:
             cv_inner = KFold(n_splits=cv, shuffle=True, random_state=random_state)
             rf = RandomForestClassifier(random_state=random_state)
@@ -148,22 +145,28 @@ def train(estimator, dataset_path: Path, save_model_path: Path, random_state: in
             space['n_estimators'] = [10,50]#[100, 300, 500]
             space['max_features'] = [10,  'sqrt']# [ 5, 10,  'sqrt', 'log2',None]
             search = GridSearchCV(rf, space, scoring='accuracy', n_jobs=1, cv=cv_inner, refit=True)
+
             cv_outer = KFold(n_splits=3, shuffle=True, random_state=1)
             scores = cross_val_score(search, features, target, scoring='accuracy', cv=cv_outer, n_jobs=-1)
-            #result = search.fit(features, target)
-            bestparam = search[scores.idxmax()].best_params_
+            result = search.fit(features, target)
+            best_model = result.best_estimator_
+
+
             # report performance
 
             click.echo(f"Accuracy nested CV: {scores}.")
-            click.echo(f"Best param. nested CV: {bestparam}.")
+            click.echo(f"Best param. nested CV: {result.best_params_}.")
             
 
            # print('Accuracy: %.3f (%.3f)' % (mean(scores), std(scores)))
         else:
+
+            if decomposition:
+                rdc = TruncatedSVD(n_components=n_components)
+                features = rdc.fit_transform(features)
+
             if estimator == "knn":
                 knn = KNeighborsClassifier(n_neighbors=n_estimators, weights=weights)
-
-                # create scaler
                 if use_scaler:
                     click.echo("StandardScaler")
                     scaler = StandardScaler()
