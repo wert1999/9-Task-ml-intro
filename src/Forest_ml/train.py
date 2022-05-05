@@ -1,11 +1,15 @@
 from pathlib import Path
+from secrets import choice
+from typing import Any
 from joblib import dump
-
 from numpy import mean
 import mlflow
+
+
 import mlflow.sklearn
 import click
 import pandas as pd
+from pytest import param
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -13,9 +17,11 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.manifold import TSNE
 from sklearn.model_selection import KFold
 from sklearn.model_selection import GridSearchCV
+#import sklearn.metrics as metrics
 
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score,v_measure_score,hamming_loss, f1_score, precision_score
+from sklearn.metrics import make_scorer
+from sklearn.model_selection import train_test_split    
 from sklearn.model_selection import cross_val_score
 
 
@@ -123,24 +129,24 @@ def fit_evaluate_model(model, X_train, y_train, X_valid, Y_valid):
     "-f",
     "--max-features",
     default="auto",
-    type=click.Choice(["auto", "sqrt", "log2"], case_sensitive=False) or int or float,
+    type=click.Choice(["auto", "sqrt", "log2"], case_sensitive=False),
     show_default=True,
 )
 def train(
-    estimator,
+    estimator: str,
     dataset_path: Path,
     save_model_path: Path,
     random_state: int,
     test_split_ratio: float,
     n_estimators: int,
-    criterion,
+    criterion: str,
     max_depth: int,
     cv: int,
     use_scaler: bool,
-    weights,
-    decomposition,
+    weights:str,
+    decomposition:bool,
     n_components: int,
-    max_features,
+    max_features: str,
     nested_cv: bool,
 ) -> None:
     dataset = pd.read_csv(dataset_path)
@@ -151,15 +157,21 @@ def train(
     #   features, target, test_size=test_split_ratio)
 
     with mlflow.start_run():
-
+        
         if nested_cv:
             cv_inner = KFold(n_splits=cv, shuffle=True, random_state=random_state)
             rf = RandomForestClassifier(random_state=random_state)
-            space = dict()
-            space["n_estimators"] = [10, 50]  # [100, 300, 500]
-            space["max_features"] = [10, "sqrt"]  # [ 5, 10,  'sqrt', 'log2',None]
+            param: dict[str, Any] = dict() 
+            param["n_estimators"] = [10, 50]  # [100, 300, 500]
+            param["max_features"] = ['auto', 'sqrt', 'log2'] 
+            scoring = {
+                "Accuracy": make_scorer(accuracy_score),
+                "V_measure": make_scorer(v_measure_score),
+                'f1_score' : make_scorer(f1_score, average = 'micro')}
+            #scoring = {"AUC": "roc_auc", "Accuracy": make_scorer(accuracy_score)}
+
             search = GridSearchCV(
-                rf, space, scoring="accuracy", n_jobs=1, cv=cv_inner, refit=True
+                rf, param, scoring=scoring, refit=scoring, n_jobs=1, cv=cv_inner,
             )
 
             cv_outer = KFold(n_splits=3, shuffle=True, random_state=1)
@@ -167,7 +179,7 @@ def train(
                 search, features, target, scoring="accuracy", cv=cv_outer, n_jobs=-1
             )
             result = search.fit(features, target)
-            best_model = result.best_estimator_
+            #best_model = result.best_estimator_
 
             # report performance
 
@@ -243,7 +255,7 @@ def train(
                 )
                 mlflow.log_metric("accuracy", mean(scores_accuracy))
                 mlflow.log_metric("v_measure", mean(scores_v_measure))
-                mlflow.log_metric("f1_micro", mean(scores_f1_micro))
+                mlflow.log_metric("hamming_loss", mean(scores_f1_micro))
 
                 knn_path = save_model_path
                 knn_path = Path(
