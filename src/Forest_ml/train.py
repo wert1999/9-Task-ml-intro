@@ -19,7 +19,7 @@ from sklearn.pipeline import Pipeline
 
 #import sklearn.metrics as metrics
 
-from sklearn.metrics import accuracy_score,v_measure_score,hamming_loss, f1_score, precision_score
+from sklearn.metrics import accuracy_score,v_measure_score, precision_score, roc_auc_score, f1_score
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import train_test_split    
 from sklearn.model_selection import cross_val_score,cross_validate
@@ -149,35 +149,39 @@ def train(
     #   features, target, test_size=test_split_ratio)
 
     with mlflow.start_run():
-        
         if nested_cv:
             cv_inner = KFold(n_splits=3, shuffle=True, random_state=random_state)
             model = RandomForestClassifier(random_state=random_state)
             space = dict()
-            space['n_estimators'] = [10, 50]
-            space['max_features'] = ['auto', 'sqrt', 'log2', None] 
+            space['n_estimators'] = [10,50]#[50, 100, 250,500]
+            space['max_features'] = ['sqrt', 'log2', 0.2] 
             space['criterion'] = ["gini", "entropy"]
             search = GridSearchCV(model, space, scoring='accuracy', n_jobs=-1, cv=cv_inner, refit=True)
             cv_outer = KFold(n_splits=5, shuffle=True, random_state=1)
             scoring = {
                     "accuracy": make_scorer(accuracy_score),
-                    "V_measure": make_scorer(v_measure_score),
+                    "precision": make_scorer(precision_score, average='micro'),
                     "f1_score": make_scorer(f1_score, average='macro')
                     }
             scores = cross_validate(search, features, target, scoring=scoring, cv=cv_outer, n_jobs=-1, return_estimator = True)
-            #click.echo(f"scores nested CV: {scores}.")
+            click.echo(f"scores nested CV: {scores}.")
             scores_accuracy = scores['test_accuracy']
-            scores_v_measure = scores['test_V_measure']
+            scores_precision_score = scores['test_precision']
             scores_f1_macro = scores['test_f1_score']
             rf = GridSearchCV(model, space, scoring='accuracy', n_jobs=-1, refit=True)
-            #click.echo(f"scores nested CV: {rf.get_params()}.")
             rf_param = rf.get_params()
-            max_features = rf_param.get('max_features')
+            click.echo(f"Param: {rf_param}.")
+
+            max_features = rf_param.get('estimator__max_features')
+            n_estimators = rf_param.get('estimator__n_estimators')
+            criterion = rf_param.get('estimator__criterion')
+
+            click.echo(f"n_estimators : {n_estimators}.")
             click.echo(f"max_features : {max_features}.")
+            click.echo(f"criterion : {criterion}.")
             rf_path = save_model_path
             rf_path = Path(rf_path.parent, f"{rf_path.stem}_rf_nested{rf_path.suffix}")
             dump(rf, rf_path)
-        
         else:
             if estimator == "knn":
                 if use_scaler:
@@ -212,11 +216,12 @@ def train(
                     cv=cv,
                     n_jobs=-1,
                 )
-                scores_v_measure = cross_val_score(
+                scores_precision_score = cross_val_score(
                     knn_pipe,
                     features,
                     target,
-                    scoring="v_measure_score",
+                    scoring="precision_score",
+                    average='micro',
                     cv=cv,
                     n_jobs=-1,
                 )
@@ -263,8 +268,8 @@ def train(
                 scores_accuracy = cross_val_score(
                     rf_pipe, features, target, scoring="accuracy", cv=cv, n_jobs=-1
                 )
-                scores_v_measure = cross_val_score(
-                    rf_pipe, features, target, scoring="v_measure_score", cv=cv, n_jobs=-1
+                scores_precision_score = cross_val_score(
+                    rf_pipe, features, target, scoring="precision_score", average='micro', cv=cv, n_jobs=-1
                 )
                 scores_f1_macro = cross_val_score(
                     rf_pipe, features, target, scoring="f1_macro", cv=cv, n_jobs=-1
@@ -289,7 +294,7 @@ def train(
             "T.SVD (" + str(n_components) + ")" if decomposition and not nested_cv else "-",
         )
         mlflow.log_metric("accuracy", mean(scores_accuracy))
-        mlflow.log_metric("v_measure", mean(scores_v_measure))
+        mlflow.log_metric("precision_score", mean(scores_precision_score))
         mlflow.log_metric("f1_macro", mean(scores_f1_macro))
 
 
