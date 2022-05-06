@@ -7,45 +7,43 @@
 Этот пакет позволяет обучать модель для прогнозирования типо лесного покрова(вида деревьев)вчетырех зонах дикой природы, расположенные в Национальном лесу Рузвельта на севере Колорадо. Признаками выступают данные предоставленые Геологической службой США и USFS (Лесная служба). 
 
 
-
-
- Clone this repository to your machine.
-2. Download [Forest Cover Type Prediction] (https://www.kaggle.com/competitions/forest-cover-type-prediction/data) dataset., save csv locally (default path is *data/*.csv* in repository's root).
-3. Make sure Python 3.9 and [Poetry](https://python-poetry.org/docs/) are installed on your machine (I use Poetry 1.1.11).
-4. Install the project dependencies (*run this and following commands in a terminal, from the root of a cloned repository*):
+1. Клонируйте репозиторий на свой компьютер
+2. Загрузите [Forest Cover Type Prediction] (https://www.kaggle.com/competitions/forest-cover-type-prediction/data). Сохраните csv локально  (путь по умолчанию *data/*.csv* в корне репозитория).
+3. Убедитесь в наличие Python 3.9 и [Poetry](https://python-poetry.org/docs/) Poetry 1.1.13.
+4. Установите зависимости проекта (*запустите эту и следущие команды из корневой папки клонированного репозитория*):
 ```sh
 poetry install --no-dev
 ```
-5. Run train with the following command:
-```sh
-poetry run train -d <path to csv with data> -s <path to save trained model>
-```
-You can configure additional options (such as hyperparameters) in the CLI. To get a full list of them, use help:
+5. Запустите train с ключом --help, чтобы посмотреть параметры коммандной строки:
 ```sh
 poetry run train --help
 ```
-6. Run MLflow UI to see the information about experiments you conducted:
+
+You can configure additional options (such as hyperparameters) in the CLI. To get a full list of them, use help:
+```sh
+```
+6. Запустите MLflow UI, чтобы увидеть результаты,выполненных вами эксперементов:
 ```sh
 poetry run mlflow ui
 ```
 
-## Development
+## Разаработчикам
 
-The code in this repository must be tested, formatted with black, and pass mypy typechecking before being commited to the repository.
+Код этого репозитория может быть оттестирован, отформатирован, используюя "black", и проверен на соответствие типов с помощью "mypy",перед тем, как он будет помещен в репозиторий.
 
-Install all requirements (including dev requirements) to poetry environment:
+Установите все требования (включая требования разработчика) к среде poetry:
 ```
 poetry install
 ```
-Now you can use developer instruments, e.g. pytest:
+Теперь вы можете использовать инструменты разработчика, например pytest:
 ```
 poetry run pytest
 ```
-More conveniently, to run all sessions of testing and formatting in a single command, install and use [nox](https://nox.thea.codes/en/stable/): 
+Удобнее, чтобы запускать все сеансы тестирования и форматирования одной командой, установите и используйте [nox](https://nox.thea.codes/ru/stable/):
 ```
 nox [-r]
 ```
-Format your code with [black](https://github.com/psf/black) by using either nox or poetry:
+Отформатируйте свой код с помощью [black](https://github.com/psf/black) используя [nox] или [poetry]:
 ```
 nox -[r]s black
 poetry run black src tests noxfile.py
