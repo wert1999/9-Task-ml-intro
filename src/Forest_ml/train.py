@@ -1,6 +1,6 @@
 from pathlib import Path
 from secrets import choice
-from sys import _ProfileFunc
+#from sys import _ProfileFunc
 from typing import Any
 from joblib import dump
 from numpy import mean
@@ -9,7 +9,7 @@ import mlflow.sklearn
 import click
 import pandas as pd
 import pandas_profiling
-from pandas_profiling import ProfileReport
+#from pandas_profiling import ProfileReport
 
 from pytest import param
 from sklearn.preprocessing import StandardScaler
@@ -128,6 +128,14 @@ from sklearn.model_selection import cross_val_score,cross_validate
     type=click.Choice(["auto", "sqrt", "log2"], case_sensitive=False),
     show_default=True,
 )
+@click.option(
+    "-report",
+    "--prfl-report",
+    default=False,
+    type=bool,
+    help = "generate ProfileReport",
+    show_default=True,
+)
 def train(
     estimator: str,
     dataset_path: Path,
@@ -144,16 +152,20 @@ def train(
     n_components: int,
     max_features: str,
     nested_cv: bool,
+    prfl_report: bool
 ) -> None:
     dataset = pd.read_csv(dataset_path)
     click.echo(f"Dataset shape: {dataset.shape}.")
     features = dataset.drop("Cover_Type", axis=1)
     target = dataset["Cover_Type"]
+    
     # features_train, features_val, target_train, target_val = train_test_split(
     #   features, target, test_size=test_split_ratio)
-
-    profile = pp.ProfileReport(dataset)
-    profile.to_file("output.html")
+    
+    if prfl_report:
+        profile = pandas_profiling.ProfileReport(dataset)
+        profile.to_file("EDAreport.html")
+        return
 
     with mlflow.start_run():
         if nested_cv:
