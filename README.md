@@ -1,10 +1,15 @@
-homework#9 for RS School Machine Learning course.
+Домашнее задание №9 по курсу машинного обучения RS School.
 
-This homework uses [Forest Cover Type Prediction] (https://www.kaggle.com/competitions/forest-cover-type-prediction/data) dataset.
+В этом домашнем задании используется набор данных [Прогнозирование типа лесного покрова]
+(https://www.kaggle.com/competitions/forest-cover-type-prediction/data) dataset.
 
-## Usage
-This package allows you to train model for detecting the presence of heart disease in the patient.
-1. Clone this repository to your machine.
+## Применение
+Этот пакет позволяет обучать модель для прогнозирования типо лесного покрова(вида деревьев)вчетырех зонах дикой природы, расположенные в Национальном лесу Рузвельта на севере Колорадо. Признаками выступают данные предоставленые Геологической службой США и USFS (Лесная служба). 
+
+
+
+
+ Clone this repository to your machine.
 2. Download [Forest Cover Type Prediction] (https://www.kaggle.com/competitions/forest-cover-type-prediction/data) dataset., save csv locally (default path is *data/*.csv* in repository's root).
 3. Make sure Python 3.9 and [Poetry](https://python-poetry.org/docs/) are installed on your machine (I use Poetry 1.1.11).
 4. Install the project dependencies (*run this and following commands in a terminal, from the root of a cloned repository*):
