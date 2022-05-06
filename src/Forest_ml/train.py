@@ -1,5 +1,6 @@
 from pathlib import Path
 from secrets import choice
+from sys import _ProfileFunc
 from typing import Any
 from joblib import dump
 from numpy import mean
@@ -7,6 +8,9 @@ import mlflow
 import mlflow.sklearn
 import click
 import pandas as pd
+import pandas_profiling
+from pandas_profiling import ProfileReport
+
 from pytest import param
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
@@ -148,6 +152,9 @@ def train(
     # features_train, features_val, target_train, target_val = train_test_split(
     #   features, target, test_size=test_split_ratio)
 
+    profile = pp.ProfileReport(dataset)
+    profile.to_file("output.html")
+
     with mlflow.start_run():
         if nested_cv:
             cv_inner = KFold(n_splits=3, shuffle=True, random_state=random_state)
@@ -164,7 +171,7 @@ def train(
                     "f1_score": make_scorer(f1_score, average='macro')
                     }
             scores = cross_validate(search, features, target, scoring=scoring, cv=cv_outer, n_jobs=-1, return_estimator = True)
-            click.echo(f"scores nested CV: {scores}.")
+            #click.echo(f"scores nested CV: {scores}.")
             scores_accuracy = scores['test_accuracy']
             scores_precision_score = scores['test_precision']
             scores_f1_macro = scores['test_f1_score']
