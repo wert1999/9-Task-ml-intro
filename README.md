@@ -18,6 +18,29 @@ poetry install --no-dev
 ```sh
 poetry run train --help
 ```
+Подробнее о ключах запуска (в [] скобках указан ключ по умолчанию, {} скобках тип ключа).
+
+```sh
+-p, --dataset-path  
+```
+[../data/], {Path}. Пусть к database,  и место сохранения модели.
+```sh
+-report  
+```
+[False], {BOOLEAN}. Создаст в корне директория файл EDAreport.html - стандартный отчет pandas_profiling
+```sh
+-e, --estimator
+```
+[rf], {rf,knn}. Выбор алгоритма классификации "rf" - RandomForestClassifier, "knn" - KNeighborsClassifier
+```sh
+  -d, --decomposition
+```  
+[False], {BOOLEAN}. использовать уменьшение размерности TruncatedSVD
+```sh
+  -r, --n-components INTEGER      n-components reduction  [default: 3]
+```
+[3], {INTEGER} количество компонент после уменьшения размерности TruncatedSVD. оганичение [1, database.shape[1]]
+
 
 You can configure additional options (such as hyperparameters) in the CLI. To get a full list of them, use help:
 ```sh
@@ -27,7 +50,7 @@ You can configure additional options (such as hyperparameters) in the CLI. To ge
 poetry run mlflow ui
 ```
 
-## Разаработчикам
+## Разработчикам
 
 Код этого репозитория может быть оттестирован, отформатирован, используюя "black", и проверен на соответствие типов с помощью "mypy",перед тем, как он будет помещен в репозиторий.
 
