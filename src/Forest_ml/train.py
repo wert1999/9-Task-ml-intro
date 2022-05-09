@@ -32,7 +32,7 @@ from sklearn.model_selection import cross_val_score,cross_validate
 
 @click.command()
 @click.option(
-    "-a",
+    "-nsv",
     "--nested-cv",
     help="nested cross-validation",
     default=False,
@@ -172,8 +172,8 @@ def train(
             cv_inner = KFold(n_splits=3, shuffle=True, random_state=random_state)
             model = RandomForestClassifier(random_state=random_state)
             space = dict()
-            space['n_estimators'] = [10,50]#[50, 100, 250,500]
-            space['max_features'] = ['sqrt', 'log2', 0.2] 
+            space['n_estimators'] = [50, 100, 250,500]
+            space['max_features'] = ['sqrt', 'log2', None] 
             space['criterion'] = ["gini", "entropy"]
             search = GridSearchCV(model, space, scoring='accuracy', n_jobs=-1, cv=cv_inner, refit=True)
             cv_outer = KFold(n_splits=5, shuffle=True, random_state=1)
