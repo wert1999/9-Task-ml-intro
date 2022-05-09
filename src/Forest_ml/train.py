@@ -39,7 +39,7 @@ from sklearn.model_selection import cross_val_score, cross_validate
 
 @click.command()
 @click.option(
-    "-nsv",
+    "-a",
     "--nested-cv",
     help="nested cross-validation",
     default=False,
@@ -242,18 +242,6 @@ def train(
         else:
             if estimator == "knn":
                 if use_scaler:
-                    knn_pipe = Pipeline(
-                        [
-                            ("sc", StandardScaler()),
-                            (
-                                "knn",
-                                KNeighborsClassifier(
-                                    n_neighbors=n_estimators, weights=weights
-                                ),
-                            ),
-                        ]
-                    )
-                    click.echo("used StandardScaler")
                     if decomposition:
                         knn_pipe = Pipeline(
                             [
@@ -269,6 +257,20 @@ def train(
                         )
                         click.echo("used StandardScaler")
                         click.echo("used TruncatedSVD")
+                    else:
+                        knn_pipe = Pipeline(
+                        [
+                            ("sc", StandardScaler()),
+                            (
+                                "knn",
+                                KNeighborsClassifier(
+                                    n_neighbors=n_estimators, weights=weights
+                                ),
+                            ),
+                        ]
+                        )
+                        click.echo("used StandardScaler")
+                    
                 elif decomposition:
                     knn_pipe = Pipeline(
                         [
@@ -294,9 +296,6 @@ def train(
                         ]
                     )
 
-                    # features_valid_scaled = scaler.transform(features_val)
-                    click.echo("used TruncatedSVD")
-
                 knn_pipe.fit(features, target)
                 # y_predicted_knn = knn.predict(features_valid_scaled)
                 scores_accuracy = cross_val_score(
@@ -307,12 +306,13 @@ def train(
                     cv=cv,
                     n_jobs=-1,
                 )
+                scoring_precision_score_avr = make_scorer(precision_score, average="micro")
                 scores_precision_score = cross_val_score(
                     knn_pipe,
                     features,
                     target,
-                    scoring="precision_score",
-                    average="micro",
+                    scoring=scoring_precision_score_avr,
+                    #average="micro",
                     cv=cv,
                     n_jobs=-1,
                 )
@@ -362,12 +362,12 @@ def train(
                 scores_accuracy = cross_val_score(
                     rf_pipe, features, target, scoring="accuracy", cv=cv, n_jobs=-1
                 )
+                scoring_precision_score_avr = make_scorer(precision_score, average="micro")
                 scores_precision_score = cross_val_score(
                     rf_pipe,
                     features,
                     target,
-                    scoring="precision_score",
-                    average="micro",
+                    scoring=scoring_precision_score_avr,
                     cv=cv,
                     n_jobs=-1,
                 )

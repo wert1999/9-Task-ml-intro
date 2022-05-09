@@ -46,11 +46,16 @@ poetry run train --help
 ```
 [0.2], {FLOAT}. Коэффициент разбиения dataset (не используется в данной реализации)
 
+```sh
+  -fe, --fe
+```  
+[False], {BOOLEAN}. Применить feature engineering. Будут удалены 2 приназа с дисперсией=0, и из двух признаков "Horizontal_Distance_To_Hydrology", "Vertical_Distance_To_Hydrology" составлен один "Eucl_dist_Hydr" как евклидово расстояние.
+
 
 ```sh
   -d, --decomposition
 ```  
-[False], {BOOLEAN}. использовать уменьшение размерности TruncatedSVD
+[False], {BOOLEAN}. Использовать уменьшение размерности TruncatedSVD
 
 ```sh
   -r, --n-components 
@@ -100,7 +105,7 @@ poetry run train --help
 [5], {INTEGER}. Количество сгибов при выполнении cross_val_score. Используется при подсчете метрик при RandomForestClassifier или KNeighborsClassifier 
 
 ```sh
--nsv, --nested-cv
+-a, --nested-cv
 ```
 [False], {BOOL}. Запустить алгоритм подбора гиперпараметров и расчета метрик NestedCV. Параметры алгоритма, пока задаются в коде (cv_inner = 3, n_estimators = [50, 100, 250,500], max_features = ['auto', 'sqrt', 'log2'], cv_outer = 5 ). Применяемый алгоритм классификации - RandomForestClassifier. 
 
@@ -136,4 +141,4 @@ poetry run black src tests noxfile.py
 ![black_result](https://github.com/wert1999/9-Task-ml-intro/black.png)
 
 Результат работы модуля mypy
-![ьнзн_result](https://github.com/wert1999/9-Task-ml-intro/mypy.png)
+![mypy_result](https://github.com/wert1999/9-Task-ml-intro/mypy.png)
