@@ -1,6 +1,7 @@
 from pathlib import Path
 from secrets import choice
-#from sys import _ProfileFunc
+
+# from sys import _ProfileFunc
 from typing import Any
 from joblib import dump
 from numpy import mean
@@ -8,8 +9,9 @@ import mlflow
 import mlflow.sklearn
 import click
 import pandas as pd
-import pandas_profiling
-#from pandas_profiling import ProfileReport
+import pandas_profiling # type: ignore 
+
+# from pandas_profiling import ProfileReport
 
 from pytest import param
 from sklearn.preprocessing import StandardScaler
@@ -21,13 +23,18 @@ from sklearn.model_selection import KFold
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 
-#import sklearn.metrics as metrics
+# import sklearn.metrics as metrics
 
-from sklearn.metrics import accuracy_score,v_measure_score, precision_score, roc_auc_score, f1_score
+from sklearn.metrics import (
+    accuracy_score,
+    v_measure_score,
+    precision_score,
+    roc_auc_score,
+    f1_score,
+)
 from sklearn.metrics import make_scorer
-from sklearn.model_selection import train_test_split    
-from sklearn.model_selection import cross_val_score,cross_validate
-
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score, cross_validate
 
 
 @click.command()
@@ -133,8 +140,15 @@ from sklearn.model_selection import cross_val_score,cross_validate
     "--prfl-report",
     default=False,
     type=bool,
-    help = "generate ProfileReport",
+    help="generate ProfileReport",
     show_default=True,
+)
+@click.option(
+    "-fe",
+    "--fe",
+    help="feature engeenering",
+    default=False,
+    type=bool,
 )
 def train(
     estimator: str,
@@ -147,53 +161,77 @@ def train(
     max_depth: int,
     cv: int,
     use_scaler: bool,
-    weights:str,
-    decomposition:bool,
+    weights: str,
+    decomposition: bool,
     n_components: int,
     max_features: str,
     nested_cv: bool,
-    prfl_report: bool
+    prfl_report: bool,
+    fe: bool,
 ) -> None:
     dataset = pd.read_csv(dataset_path)
     click.echo(f"Dataset shape: {dataset.shape}.")
     features = dataset.drop("Cover_Type", axis=1)
     target = dataset["Cover_Type"]
-    
+
     # features_train, features_val, target_train, target_val = train_test_split(
     #   features, target, test_size=test_split_ratio)
-    
+
     if prfl_report:
-        profile = pandas_profiling.ProfileReport(dataset)
+        profile = pandas_profiling.ProfileReport(dataset) 
         profile.to_file("EDAreport.html")
         return
 
     with mlflow.start_run():
+        if fe:
+            features["Eucl_dist_Hydr"] = (
+                features["Horizontal_Distance_To_Hydrology"] ** 2
+                + features["Vertical_Distance_To_Hydrology"] ** 2
+            ) ** 0.5
+            features.drop(
+                ["Horizontal_Distance_To_Hydrology", "Vertical_Distance_To_Hydrology"],
+                axis="columns",
+                inplace=True,
+            )
+            features.drop(["Soil_Type7", "Soil_Type15"], axis="columns", inplace=True)
+
         if nested_cv:
             cv_inner = KFold(n_splits=3, shuffle=True, random_state=random_state)
             model = RandomForestClassifier(random_state=random_state)
-            space = dict()
-            space['n_estimators'] = [50, 100, 250,500]
-            space['max_features'] = ['sqrt', 'log2', None] 
-            space['criterion'] = ["gini", "entropy"]
-            search = GridSearchCV(model, space, scoring='accuracy', n_jobs=-1, cv=cv_inner, refit=True)
+            space: dict[str, Any] = dict() 
+            
+            space["n_estimators"] = [50, 100, 250, 500]
+            space["max_features"] = ["auto", "sqrt", "log2"]
+            space["criterion"] = ["gini", "entropy"]
+            search = GridSearchCV(
+                model, space, scoring="accuracy", n_jobs=-1, cv=cv_inner, refit=True
+            )
             cv_outer = KFold(n_splits=5, shuffle=True, random_state=1)
             scoring = {
-                    "accuracy": make_scorer(accuracy_score),
-                    "precision": make_scorer(precision_score, average='micro'),
-                    "f1_score": make_scorer(f1_score, average='macro')
-                    }
-            scores = cross_validate(search, features, target, scoring=scoring, cv=cv_outer, n_jobs=-1, return_estimator = True)
-            #click.echo(f"scores nested CV: {scores}.")
-            scores_accuracy = scores['test_accuracy']
-            scores_precision_score = scores['test_precision']
-            scores_f1_macro = scores['test_f1_score']
-            rf = GridSearchCV(model, space, scoring='accuracy', n_jobs=-1, refit=True)
+                "accuracy": make_scorer(accuracy_score),
+                "precision": make_scorer(precision_score, average="micro"),
+                "f1_score": make_scorer(f1_score, average="macro"),
+            }
+            scores = cross_validate(
+                search,
+                features,
+                target,
+                scoring=scoring,
+                cv=cv_outer,
+                n_jobs=-1,
+                return_estimator=True,
+            )
+            # click.echo(f"scores nested CV: {scores}.")
+            scores_accuracy = scores["test_accuracy"]
+            scores_precision_score = scores["test_precision"]
+            scores_f1_macro = scores["test_f1_score"]
+            rf = GridSearchCV(model, space, scoring="accuracy", n_jobs=-1, refit=True)
             rf_param = rf.get_params()
             click.echo(f"Param: {rf_param}.")
 
-            max_features = rf_param.get('estimator__max_features')
-            n_estimators = rf_param.get('estimator__n_estimators')
-            criterion = rf_param.get('estimator__criterion')
+            max_features = rf_param.get("estimator__max_features")
+            n_estimators = rf_param.get("estimator__n_estimators")
+            criterion = rf_param.get("estimator__criterion")
 
             click.echo(f"n_estimators : {n_estimators}.")
             click.echo(f"max_features : {max_features}.")
@@ -204,23 +242,57 @@ def train(
         else:
             if estimator == "knn":
                 if use_scaler:
-                    knn_pipe = Pipeline([('sc', StandardScaler()),
-                        ('knn', KNeighborsClassifier(n_neighbors=n_estimators, weights=weights))])
+                    knn_pipe = Pipeline(
+                        [
+                            ("sc", StandardScaler()),
+                            (
+                                "knn",
+                                KNeighborsClassifier(
+                                    n_neighbors=n_estimators, weights=weights
+                                ),
+                            ),
+                        ]
+                    )
                     click.echo("used StandardScaler")
                     if decomposition:
-                        knn_pipe = Pipeline([('sc', StandardScaler()),
-                        ('svd', TruncatedSVD(n_components=n_components)),
-                        ('knn', KNeighborsClassifier(n_neighbors=n_estimators, weights=weights))])
+                        knn_pipe = Pipeline(
+                            [
+                                ("sc", StandardScaler()),
+                                ("svd", TruncatedSVD(n_components=n_components)),
+                                (
+                                    "knn",
+                                    KNeighborsClassifier(
+                                        n_neighbors=n_estimators, weights=weights
+                                    ),
+                                ),
+                            ]
+                        )
                         click.echo("used StandardScaler")
                         click.echo("used TruncatedSVD")
                 elif decomposition:
-                    knn_pipe = Pipeline([
-                        ('svd', TruncatedSVD(n_components=n_components)),
-                        ('knn', KNeighborsClassifier(n_neighbors=n_estimators, weights=weights))])
+                    knn_pipe = Pipeline(
+                        [
+                            ("svd", TruncatedSVD(n_components=n_components)),
+                            (
+                                "knn",
+                                KNeighborsClassifier(
+                                    n_neighbors=n_estimators, weights=weights
+                                ),
+                            ),
+                        ]
+                    )
                     click.echo("used TruncatedSVD")
                 else:
-                    knn_pipe = Pipeline([
-                        ('knn', KNeighborsClassifier(n_neighbors=n_estimators, weights=weights))])
+                    knn_pipe = Pipeline(
+                        [
+                            (
+                                "knn",
+                                KNeighborsClassifier(
+                                    n_neighbors=n_estimators, weights=weights
+                                ),
+                            )
+                        ]
+                    )
 
                     # features_valid_scaled = scaler.transform(features_val)
                     click.echo("used TruncatedSVD")
@@ -240,7 +312,7 @@ def train(
                     features,
                     target,
                     scoring="precision_score",
-                    average='micro',
+                    average="micro",
                     cv=cv,
                     n_jobs=-1,
                 )
@@ -260,7 +332,7 @@ def train(
                 print("knn_path", knn_path)
                 dump(knn_pipe, knn_path)
                 click.echo(f"Model is saved to {knn_path}.")
-                
+
             elif estimator == "rf":
 
                 rf = RandomForestClassifier(
@@ -271,24 +343,33 @@ def train(
                     random_state=random_state,
                 )
                 if use_scaler:
-                    rf_pipe = Pipeline([('rf', rf)])
+                    rf_pipe = Pipeline([("rf", rf)])
                     click.echo("StandardScaler was ignored")
                     if decomposition:
-                        rf_pipe = Pipeline([('svd', TruncatedSVD(n_components=n_components)),
-                        ('rf', rf)])
+                        rf_pipe = Pipeline(
+                            [
+                                ("svd", TruncatedSVD(n_components=n_components)),
+                                ("rf", rf),
+                            ]
+                        )
                 elif decomposition:
-                    rf_pipe = Pipeline([
-                        ('svd', TruncatedSVD(n_components=n_components)),
-                        ('rf', rf)])
+                    rf_pipe = Pipeline(
+                        [("svd", TruncatedSVD(n_components=n_components)), ("rf", rf)]
+                    )
                 else:
-                    rf_pipe = Pipeline([
-                        ('rf', rf)])
+                    rf_pipe = Pipeline([("rf", rf)])
 
                 scores_accuracy = cross_val_score(
                     rf_pipe, features, target, scoring="accuracy", cv=cv, n_jobs=-1
                 )
                 scores_precision_score = cross_val_score(
-                    rf_pipe, features, target, scoring="precision_score", average='micro', cv=cv, n_jobs=-1
+                    rf_pipe,
+                    features,
+                    target,
+                    scoring="precision_score",
+                    average="micro",
+                    cv=cv,
+                    n_jobs=-1,
                 )
                 scores_f1_macro = cross_val_score(
                     rf_pipe, features, target, scoring="f1_macro", cv=cv, n_jobs=-1
@@ -297,28 +378,31 @@ def train(
                 rf_path = Path(rf_path.parent, f"{rf_path.stem}_rf{rf_path.suffix}")
                 dump(rf_pipe, rf_path)
                 click.echo(f"Model is saved to {rf_path}.")
-        
-       # mlflow.sklearn.log_model(knn_path, "model", registered_model_name="KNN")
+
+        # mlflow.sklearn.log_model(knn_path, "model", registered_model_name="KNN")
 
         mlflow.log_param("nested_cv", nested_cv)
         mlflow.log_param("_model", estimator)
         mlflow.log_param("n_ngb./n_est.", n_estimators)
-        mlflow.log_param("criterion", criterion if estimator=="rf" else "-")
-        mlflow.log_param("weights", weights if estimator=="knn" else "-")
-        mlflow.log_param("use_scaler", use_scaler if (not nested_cv) and (estimator != "rf") else "not use")
-        mlflow.log_param("max_depth", max_depth if estimator=="rf" else "-")
-        mlflow.log_param("max_features", max_features if estimator=="rf" else "-")
+        mlflow.log_param("criterion", criterion if estimator == "rf" else "-")
+        mlflow.log_param("weights", weights if estimator == "knn" else "-")
+        mlflow.log_param(
+            "use_scaler",
+            use_scaler if (not nested_cv) and (estimator != "rf") else "not use",
+        )
+        mlflow.log_param("max_depth", max_depth if estimator == "rf" else "-")
+        mlflow.log_param("max_features", max_features if estimator == "rf" else "-")
         mlflow.log_param(
             "decomp.",
-            "T.SVD (" + str(n_components) + ")" if decomposition and not nested_cv else "-",
+            "T.SVD (" + str(n_components) + ")"
+            if decomposition and not nested_cv
+            else "-",
         )
         mlflow.log_metric("accuracy", mean(scores_accuracy))
         mlflow.log_metric("precision_score", mean(scores_precision_score))
         mlflow.log_metric("f1_macro", mean(scores_f1_macro))
 
 
-                
-
 """
 @click.option(
     "-f",
@@ -335,7 +419,7 @@ def train(
     show_default=True,
 )
 """
-'''
+"""
 cv_inner = KFold(n_splits=cv, shuffle=True, random_state=random_state)
 rf = RandomForestClassifier(random_state=random_state)
 param: dict[str, Any] = dict() 
@@ -362,4 +446,4 @@ result = search.fit(features, target)
 
 click.echo(f"Accuracy nested CV: {scores}.")
 click.echo(f"Best param. nested CV: {result.best_params_}.")
-'''
+"""
