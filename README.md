@@ -23,32 +23,93 @@ poetry run train --help
 ```sh
 -p, --dataset-path  
 ```
-[../data/], {Path}. Пусть к database,  и место сохранения модели.
+[../data/], {Path}. Путь к database,  и место сохранения модели.
+
 ```sh
--report  
+-s, --save-model-path  
+```
+[data/model.joblib], {FILE}. В зависимости от выбранного алгоритма к имени файла добавиться суффикс (*knn, *rf, *rf_nested)
+```
+
+```sh
+-report, --prfl-report  
 ```
 [False], {BOOLEAN}. Создаст в корне директория файл EDAreport.html - стандартный отчет pandas_profiling
+
 ```sh
--e, --estimator
+--random-state  
 ```
-[rf], {rf,knn}. Выбор алгоритма классификации "rf" - RandomForestClassifier, "knn" - KNeighborsClassifier
+[42], {INTEGER}. Параметр генератора случайных значений
+
+```sh
+--test-split-ratio  
+```
+[0.2], {FLOAT}. Коэффициент разбиения dataset (не используется в данной реализации)
+
+
 ```sh
   -d, --decomposition
 ```  
 [False], {BOOLEAN}. использовать уменьшение размерности TruncatedSVD
+
 ```sh
-  -r, --n-components INTEGER      n-components reduction  [default: 3]
+  -r, --n-components 
 ```
 [3], {INTEGER} количество компонент после уменьшения размерности TruncatedSVD. оганичение [1, database.shape[1]]
 
-
-You can configure additional options (such as hyperparameters) in the CLI. To get a full list of them, use help:
 ```sh
+  -sc, --use-scaler 
 ```
+[True], {BOOLEAN} Флаг применения StandardScaler для алгоритма KNeighborsClassifier.
+
+```sh
+-e, --estimator
+```
+[rf], {rf,knn}. Выбор алгоритма классификации "rf" - RandomForestClassifier, "knn" - KNeighborsClassifier. 
+Данный ключ является корневым, в зависимости от его выбора будут учитываться или не учитываться остальные ключи.
+
+```sh
+-n, --n-estimators
+```
+[100], {INTEGER}. Значение n-estimators при выборе алгоритма RandomForestClassifier или n_neighbors при KNeighborsClassifier 
+Хотя при выборе KNN, n_neighbors: [1, database.shape[0]], к выбору этого параметра необходимо подходить взвешано.
+
+```sh
+-w, --weights
+```
+[uniform], {uniform|distance}. Выбор весовая функции для алгоритма KNeighborsClassifier.
+
+```sh
+-с, --criterion
+```
+[gini], {gini|entropy}. При выборе алгоритма RandomForestClassifier возможен выбор алгоритма рачщепления
+
+```sh
+-f, --max-features
+```
+[auto], {auto|sqrt|log2}. Количесвто функций при разделении -параметр выбора лучшего сплита для алгоритма RandomForestClassifier
+
+```sh
+-m, --max-depth
+```
+[None], {INTEGER}. Максимальная глубина дерева для алгоритма RandomForestClassifier. Если None, то узлы расширяются до тех пор, пока все листья не станут чистыми или пока все листья не будут содержать выборок меньше, чем min_samples_split.
+
+```sh
+-cv, --cv
+```
+[5], {INTEGER}. Количество сгибов при выполнении cross_val_score. Используется при подсчете метрик при RandomForestClassifier или KNeighborsClassifier 
+
+```sh
+-nsv, --nested-cv
+```
+[False], {BOOL}. Запустить алгоритм подбора гиперпараметров и расчета метрик NestedCV. Параметры алгоритма, пока задаются в коде (cv_inner = 3, n_estimators = [50, 100, 250,500], max_features = ['auto', 'sqrt', 'log2'], cv_outer = 5 ). Применяемый алгоритм классификации - RandomForestClassifier. 
+
 6. Запустите MLflow UI, чтобы увидеть результаты,выполненных вами эксперементов:
 ```sh
 poetry run mlflow ui
 ```
+После запуска, результат можно увидеть в браузере по адресу: http://127.0.0.1:5000/
+
 
 ## Разработчикам
 
