@@ -114,6 +114,9 @@ poetry run train --help
 poetry run mlflow ui
 ```
 После запуска, результат можно увидеть в браузере по адресу: http://127.0.0.1:5000/
+Результаты эксперементов с различными моделями и параметрами:
+![mlflow](https://github.com/wert1999/9-Task-ml-intro/blob/master/MLruns.png)
+
 
 
 ## Разработчикам
