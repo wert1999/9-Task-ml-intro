@@ -88,7 +88,7 @@ from sklearn.model_selection import cross_val_score, cross_validate
 @click.option(
     "-n",
     "--n-estimators",
-    default=100,
+    default=50,
     help="n_estimators for RF / n_neighbors for KNN ",
     type=int,
     show_default=True,
@@ -96,7 +96,7 @@ from sklearn.model_selection import cross_val_score, cross_validate
 @click.option(
     "-c",
     "--criterion",
-    default="gini",
+    default="entropy",
     type=click.Choice(["gini", "entropy"]),
     show_default=True,
 )
@@ -200,7 +200,7 @@ def train(
             model = RandomForestClassifier(random_state=random_state)
             space: dict[str, Any] = dict() 
             
-            space["n_estimators"] = [50, 100, 250, 500]
+            space["n_estimators"] = [10, 25, 50, 100, 250]
             space["max_features"] = ["auto", "sqrt", "log2"]
             space["criterion"] = ["gini", "entropy"]
             search = GridSearchCV(
@@ -226,12 +226,13 @@ def train(
             scores_precision_score = scores["test_precision"]
             scores_f1_macro = scores["test_f1_score"]
             rf = GridSearchCV(model, space, scoring="accuracy", n_jobs=-1, refit=True)
-            rf_param = rf.get_params()
-            click.echo(f"Param: {rf_param}.")
+            #rf_param = rf.get_params()
+            rf.fit(features, target)
+            #click.echo(f"Param: {rf.best_params_}.")
 
-            max_features = rf_param.get("estimator__max_features")
-            n_estimators = rf_param.get("estimator__n_estimators")
-            criterion = rf_param.get("estimator__criterion")
+            max_features = rf.best_params_["max_features"]
+            n_estimators = rf.best_params_["n_estimators"]
+            criterion = rf.best_params_["criterion"]
 
             click.echo(f"n_estimators : {n_estimators}.")
             click.echo(f"max_features : {max_features}.")
