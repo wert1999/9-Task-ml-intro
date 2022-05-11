@@ -141,7 +141,7 @@ nox -[r]s black
 poetry run black src tests noxfile.py
 ```
 Результат работы модуля black
-![black_result](https://github.com/wert1999/9-Task-ml-intro/black.png)
+![black_result](https://github.com/wert1999/9-Task-ml-intro/blob/master/black.png)
 
 Результат работы модуля mypy
-![mypy_result](https://github.com/wert1999/9-Task-ml-intro/mypy.png)
+![mypy_result](https://github.com/wert1999/9-Task-ml-intro/blob/master/mypy.png)
